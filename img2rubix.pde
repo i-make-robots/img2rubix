@@ -7,23 +7,23 @@
 color white = color(255,255,255);
 color red = color(255,0,0);
 color blue = color(0,0,255);
-color orange = color(255,127,0);
+color orange = color(255,165,0);
 color green = color(0,255,0);
 color yellow = color(255,255,0);
 
-color [] list = { white, red, blue, orange, green, yellow };
+color [] palette = { white, red, blue, orange, green, yellow };
 
 class Cube {
   int px;
   int py;
-  public int [] colors = {0,1,2, 3,4,5, 4,3,2};
+  public int [] colors = {0,0,0, 0,0,0, 0,0,0};
   
   public void draw() {
     stroke(0,0,0);
     int j=0;
     for(int y=0;y<3;++y) {
       for(int x=0;x<3;++x) {
-        fill(list[colors[j++%colors.length]]);
+        fill(palette[colors[j++%colors.length]]);
         rect(px+x*SQUARE_SIZE,
              py+y*SQUARE_SIZE,
              SQUARE_SIZE,
@@ -57,6 +57,9 @@ void inputSelected(File selection) {
   img = loadImage(selection.getAbsolutePath());
   cropImageToSquare();
   resizeImageToFillWindow();
+  
+  DitherFloydSteinberg dfs = new DitherFloydSteinberg();
+  img = dfs.filter(img);
   img.loadPixels();
   
   quantizeImageToCubes();
@@ -85,22 +88,26 @@ void quantizeCube(int px,int py,Cube cube) {
   for(int y=0;y<3;++y) {
     for(int x=0;x<3;++x) {
       color c = getAverageColorInSquare(px+x*SQUARE_SIZE,py+y*SQUARE_SIZE);
-      cube.colors[j++]=getNearestCubeColorTo(c);
+      cube.colors[j++]=quantize(c);
     }
   }
 }
 
-int getNearestCubeColorTo(color c) {
+int quantize(color c) {
   float d = Integer.MAX_VALUE;
   int best=0;
-  for(int i=0;i<list.length;++i) {
-    float diff = colorDifference(c,list[i]);
+  for(int i=0;i<palette.length;++i) {
+    float diff = colorDifference(c,palette[i]);
     if(d>diff) {
       d=diff;
       best=i;
     }
   }
   return best;
+}
+
+color quantizeToColor(color c) {
+  return palette[quantize(c)];
 }
 
 
@@ -162,6 +169,7 @@ color getColorAt(int px,int py) {
 
 
 void resizeImageToFillWindow() {
+  img.resize(width/SQUARE_SIZE,width/SQUARE_SIZE);
   img.resize(width,width);
 }
 
@@ -191,7 +199,7 @@ void drawRandomColors() {
   int j=0;
   for(int y=0;y<3;++y) {
     for(int x=0;x<3;++x) {
-      fill(list[j++%list.length]);
+      fill(palette[j++%palette.length]);
       stroke(0,0,0);
       rect(x*SQUARE_SIZE,y*SQUARE_SIZE,SQUARE_SIZE,SQUARE_SIZE);
     }
